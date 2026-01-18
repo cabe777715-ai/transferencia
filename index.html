@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferência</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="l-l">
+        <div id="logo">
+            <img src="img/transferencia.png" Alt="logo">
+        </div>
+        <p id="descrição">
+             Seu site para transferências monetárias
+        </p>
+    </div>
+    <hr class="hr1">
+
+    <div id="l-p">
+        <p id="nome1">
+            Transferência bancária para: 
+        </p>
+        <p id="nome2">
+            Sarah Freitas Ribeiro
+        </p>
+
+        <p id="nome3">
+            ***.419.441-**
+        </p>
+
+        <p id="nome4">
+            Valor de cobrança: R$ 9,00
+        </p>
+        <h1 id="informe">
+            Informe os dados do seu cartão de crédito ou débito
+        </h1>
+
+        <div class="cartao">
+            <img src="img/visa.png" Alt="visa">        
+            <img src="img/mastercard.png" Alt="mastercard">       
+            <img src="img/elo.png" Alt="elo">
+            <img src="img/hipercard.png" Alt="hipercard">        
+            <img src="img/american express.png" Alt="american express">       
+            <img src="img/diners club.png" Alt="diners club">
+        </div>
+
+        <form id="dados">
+            <div class="dados1">
+                <input type="text" name="numero" id="numero" class="formulario" min="0" max="19" maxlength="19" placeholder="Número do cartão" />
+            </div>
+            <div class="dados1">
+                <input type="text" name="data" id="data" class="formulario" maxlength="5" placeholder="Data de validade"/>
+                <input type="text" name="cvv" id="cvv" class="formulario" maxlength="4"  placeholder="CVV"/>
+            </div>
+            <div class="dados1">
+                <input type="text" name="nome" id="nome" class="formulario" maxlength="50" placeholder="Nome no cartão"/>
+            </div class="dados1">
+
+            <div class="radio-container">
+                <label class="form-label">
+                    Escolha "Crédito" ou "Débito"
+                </label>
+
+                <div id="opp_inputs">
+                    <div class="radio-box">
+                        <input 
+                            type="radio"
+                            name="gender"
+                            id="credit"
+                            class="form-control"
+                            value="credit"
+                        >
+                        <label 
+                            for="credit" 
+                            class="form-label"
+                        >
+                            Crédito
+                        </label>
+                    </div>
+
+                    <div class="radio-box">
+                        <input 
+                            type="radio"
+                            name="gender"
+                            id="debit"
+                            class="form-control"
+                            value="debit"
+                        >
+                        <label 
+                            for="debit" 
+                            class="form-label"
+                        >
+                            Débito
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+        <div class="falas">
+            <p id="fala1">
+                Cartões que suportam transações de débito e de crédito poderão ser processados de ambas as formas.
+            </p>
+        </div>
+        <form id="dadosss">
+            <div id="envio">
+                <button type="submit" class="butao">
+                    <span class="text">Transferir</span>
+                </button>
+            </div>
+        </form>
+        <div class="falas">
+            <p id="fala2">
+                Esta página é protegida pelo Google reCAPTCHA para garantir que você não é um robô.
+            </p>
+        </div>
+    </div>
+
+    <hr class="hr2">
+
+    <div id="l-c">
+        <div class="seloseguro">
+            <img src="img/site seguro.png" Alt="siteseguro">
+            <img src="img/safe.png" Alt="safe">
+        </div>
+
+        <p id="confi1">
+            Site usado para transferências rápidas e seguras, verificado e confiado pelo Google
+        </p>
+        <p id="confi2">
+            Todos os direitos reservados
+        </p>
+    </div>
+    <script src="javascript/script.js"></script>
+</body>
+</html>
