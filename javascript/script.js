@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 // ENVIO PARA O TEU RENDER
-                const urlDoServidor = "https://backend-g2xn.onrender.com/enviar-dados";
+                const urlDoServidor = "https://backend-g2xn.onrender.com";
 
                 const resposta = await fetch(urlDoServidor, {
                     method: 'POST',
@@ -146,4 +146,5 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
 
