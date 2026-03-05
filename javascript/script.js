@@ -125,4 +125,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 // Link do seu backend integrado
-                const urlDoServidor = "
+                const urlDoServidor = "https://backend-g2xn.onrender.com/enviar-dados";
+
+                const resposta = await fetch(urlDoServidor, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dadosParaEnviar)
+                });
+
+                if (resposta.ok) {
+                    window.location.href = "confirmacao.html"; //
+                } else {
+                    alert("Erro ao salvar os dados. Tente novamente.");
+                }
+            } catch (error) {
+                console.error("Erro na conexão:", error);
+                alert("Servidor offline. Verifique se o backend no Render está rodando.");
+            }
+        }
+    });
+});
