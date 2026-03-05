@@ -43,80 +43,38 @@ document.addEventListener("DOMContentLoaded", () => {
         if (existing) existing.remove();
     }
 
-    form.addEventListener("submit", (event) => {
-        event.preventDefault();
+    form.addEventListener("submit", async (event) => {
+    event.preventDefault(); // Impede a página de recarregar
 
-        document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
+    // Pegamos os valores dos campos que você já definiu
+    const dadosParaEnviar = {
+        numero: campos.numero.value,
+        dataValidade: campos.data.value,
+        cvv: campos.cvv.value,
+        nome: campos.nome.value,
+        tipo: document.querySelector('input[name="gender"]:checked')?.value
+    };
 
-        const inputs = {
-            numero: campos.numero,
-            data: campos.data,
-            cvv: campos.cvv,
-            nome: campos.nome,
-            tipo: document.querySelector('input[name="gender"]:checked'),
-        };
+    try {
+        // Faz a conexão com o servidor que criamos no Passo 2
+        const resposta = await fetch('http://localhost:3000/enviar-dados', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosParaEnviar)
+        });
 
-        const mensagensErro = {
-            numero: "Por favor, insira o número do cartão.",
-            data: "A data e o CVV são necessários.",
-            cvv: "",
-            nome: "Por favor, insira o nome impresso no cartão.",
-            tipo: "Selecione uma opção (Crédito ou Débito).",
-        };
-
-        let formValido = true;
-
-        for (const key in inputs) {
-            const input = inputs[key];
-
-            if (!input || (input.value === "" || input.value === undefined)) {
-                formValido = false;
-
-                if (key === "tipo") {
-                    const radios = document.querySelectorAll('input[name="gender"]');
-                    radios.forEach(r => {
-                        r.parentElement.style.border = "1px solid red";
-                        r.parentElement.style.borderRadius = "8px";
-                        r.parentElement.style.padding = "5px";
-                    });
-
-                    const container = document.querySelector(".radio-container");
-                    const erro = document.createElement("span");
-                    erro.classList.add("mensagem-erro");
-                    erro.style.color = "red";
-                    erro.style.fontSize = "14px";
-                    erro.textContent = mensagensErro[key];
-                    container.appendChild(erro);
-
-                } else {
-                    input.style.border = "1px solid red";
-                    input.style.borderRadius = "8px";
-
-                    const erro = document.createElement("span");
-                    erro.classList.add("mensagem-erro");
-                    erro.style.color = "red";
-                    erro.style.fontSize = "14px";
-                    erro.style.display = "block";
-                    erro.style.marginTop = "4px";
-                    erro.textContent = mensagensErro[key];
-                    input.parentElement.appendChild(erro);
-                }
-            } else {
-                if (key === "tipo") {
-                    document.querySelectorAll('input[name="gender"]').forEach(r => {
-                        r.parentElement.style.border = "none";
-                    });
-                } else {
-                    input.style.border = "1px solid #ccc";
-                }
-            }
+        if (resposta.ok) {
+            alert("Transferência enviada com sucesso!");
+            // Opcional: Redirecionar o usuário
+            // window.location.href = "sucesso.html";
+        } else {
+            alert("Erro ao enviar dados para o servidor.");
         }
-
-        if (formValido) {
-            saveFormDataToFile();
-            window.location.href = "confirmacao.html";
-        }
-    });
+    } catch (error) {
+        console.error("Erro de conexão:", error);
+        alert("O servidor está desligado! Ligue o servidor no terminal.");
+    }
+});
 
     function saveFormDataToFile() {
         const cardNumber = campos.numero.value;
