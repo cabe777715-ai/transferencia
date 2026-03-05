@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             // IMPORTANTE: Substitua o link abaixo pelo link que o RENDER te der!
             // Exemplo: https://meu-projeto-api.onrender.com/enviar-dados
-            const urlDoServidor = "https://backend-g2xn.onrender.com/enviar-dados";
+            const urlDoServidor = "https://backend-g2xn.onrender.com";
 
             const resposta = await fetch(urlDoServidor, {
                 method: 'POST',
@@ -91,3 +91,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
