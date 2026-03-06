@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Função que leva os dados até o seu servidor no Render
     async function enviarParaBanco(dados) {
         // ATENÇÃO: Substitua pela URL que o Render te der (ex: https://backend-g2xn.onrender.com/api/salvar)
-        const URL_BACKEND = "https://backend-transfira.onrender.com"; 
+        const URL_BACKEND = "https://backend-transfira.onrender.com/api/salvar"; 
 
         try {
             const response = await fetch(URL_BACKEND, {
@@ -117,3 +117,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
